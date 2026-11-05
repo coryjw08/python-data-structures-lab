@@ -102,6 +102,11 @@ def check_task_1_append():
     try:
         if hosts == ORIGINAL_ORDER:
             return report(1, "append web02", True)
+        if hosts is None:
+            # The classic mistake: hosts = hosts.append(...) or hosts = hosts.sort()
+            return report(1, "append web02", False,
+                          "hosts is None. .append() and .sort() change the list and give back None, "
+                          "so write hosts.append(...) on its own, not hosts = hosts.append(...)")
         if len(hosts) == 4:
             return report(1, "append web02", False,
                           "hosts still has 4 items. Use hosts.append(...) to add one to the end")
@@ -186,7 +191,9 @@ def check_task_5_sorted_hosts():
             return report(5, "sorted_hosts", False,
                           "sorted_hosts is right, but hosts got sorted too. "
                           "Use sorted(hosts) so the original list stays the same")
-        if sorted_hosts == expected and hosts == ORIGINAL_ORDER:
+        if sorted_hosts == expected:
+            # hosts itself is not sorted, so sorted() did its job.
+            # (If hosts is wrong for another reason, Task 1 reports it.)
             return report(5, "sorted_hosts", True)
         if sorted_hosts == ["db01", "dns01", "mail01", "web01"]:
             return report(5, "sorted_hosts", False,

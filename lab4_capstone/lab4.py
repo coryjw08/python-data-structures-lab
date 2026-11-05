@@ -87,7 +87,8 @@ alerts = []         # list of (ip, count) tuples
 alert_ips = set()   # just the IPs, as a set (used in Step 5)
 
 for ip in fails:
-    count = fails[ip]
+    # "or 0" just keeps this loop from crashing before Task 2b is done.
+    count = fails[ip] or 0
 
     # TODO 3: Set is_alert to True or False. An IP is an alert when BOTH:
     #           - count is MORE than THRESHOLD  (use >, not >=)
@@ -213,6 +214,14 @@ def check_task_1_lines():
             return report(1, "lines", False,
                           "each line still ends with a newline. Use .read().splitlines() "
                           "instead of .readlines()")
+        if type(lines) is list and len(lines) > 0 and lines[-1] == "":
+            return report(1, "lines", False,
+                          "there is an extra empty string at the end of the list. "
+                          "Use .splitlines() instead of .split(...)")
+        if type(lines) is list:
+            return report(1, "lines", False,
+                          f"expected a list of {len(expected)} lines, got a list of {len(lines)}. "
+                          "Use open(LOG_FILE).read().splitlines()")
         return report(1, "lines", False,
                       f"expected a list of {len(expected)} lines, got a {type(lines).__name__}. "
                       "Use open(LOG_FILE).read().splitlines()")
@@ -257,9 +266,25 @@ def check_task_3_alerts():
             if all(type(item) is tuple for item in alerts):
                 return report(3, "alerts", True)
             return report(3, "alerts", False, "each alert should be a tuple: (ip, count)")
+        if len(alerts) == 0:
+            return report(3, "alerts", False,
+                          f"no alerts yet (expected {len(expected)}). Set is_alert to a "
+                          "True/False test, and finish Task 2 first")
+        if type(is_alert) is str:
+            return report(3, "alerts", False,
+                          "is_alert is text in quotes, so it always counts as True. "
+                          "Remove the quotes so Python runs the test")
+        if fails != expected_fails():
+            return report(3, "alerts", False,
+                          "Task 2 is not passing yet, so the counts are off. Fix Task 2 first")
         alerted = set()
         for item in alerts:
             alerted.add(item[0])
+        for address, total in expected_fails().items():
+            if total < THRESHOLD and address in alerted:
+                return report(3, "alerts", False,
+                              f"{address} has only {total} failures but was alerted. "
+                              "Test count > THRESHOLD, and join the two tests with 'and' (not 'or')")
         for address in allowlist:
             if address in alerted:
                 return report(3, "alerts", False,
@@ -270,10 +295,6 @@ def check_task_3_alerts():
                 return report(3, "alerts", False,
                               f"{address} has exactly {THRESHOLD} failures. That is not MORE than "
                               f"{THRESHOLD}. Use > instead of >=")
-        if len(alerts) == 0:
-            return report(3, "alerts", False,
-                          f"no alerts yet (expected {len(expected)}). Set is_alert to a "
-                          "True/False test, and finish Task 2 first")
         return report(3, "alerts", False,
                       f"expected {len(expected)} alerts, got {len(alerts)}. Check both tests: "
                       "count > THRESHOLD and ip not in allowlist")
@@ -295,6 +316,14 @@ def check_task_4_threat_intel():
         if type(threat_intel) is set and len(threat_intel) == 1:
             return report(4, "threat_intel", False,
                           "the set has only 1 item. Did you forget .splitlines()?")
+        if type(threat_intel) is set and all(len(str(item)) == 1 for item in threat_intel):
+            return report(4, "threat_intel", False,
+                          "the set holds single characters, not IPs. "
+                          "Add .splitlines() before wrapping it in set( ... )")
+        if type(threat_intel) is set and any(str(item).endswith("\n") for item in threat_intel):
+            return report(4, "threat_intel", False,
+                          "the IPs still end with a newline. Use .read().splitlines() "
+                          "instead of .readlines()")
         return report(4, "threat_intel", False,
                       f"expected a set of {len(expected)} IPs. Did you read BAD_IPS_FILE "
                       "(not LOG_FILE) and use set()?")
@@ -317,15 +346,27 @@ def check_task_5_confirmed():
             return report(5, "confirmed", False,
                           f"confirmed should be a set, got a {type(confirmed).__name__}. "
                           "& between two sets gives you a set")
+        inputs_ok = (alert_ips == expected_alert_ips
+                     and type(threat_intel) is set and threat_intel == expected_threat_intel())
+        if len(confirmed) == 0 and inputs_ok:
+            # Usually: set(alerts) & threat_intel. Tuples never match plain IP strings.
+            return report(5, "confirmed", False,
+                          "the set is empty. Use alert_ips (just the IPs), "
+                          "not alerts (the list of (ip, count) tuples)")
         if len(confirmed) == 0:
             return report(5, "confirmed", False,
                           "the set is empty. Are Tasks 3 and 4 passing? Both sets need to be filled")
         if confirmed == alert_ips:
             return report(5, "confirmed", False,
                           "that is every alert IP. Keep only the ones ALSO in threat_intel, using &")
+        if inputs_ok and confirmed in (alert_ips - threat_intel, threat_intel - alert_ips,
+                                       alert_ips | threat_intel):
+            return report(5, "confirmed", False,
+                          "wrong set operator. & keeps only the items in BOTH sets. "
+                          "- and | do something else")
         return report(5, "confirmed", False,
-                      f"expected {len(expected)} IPs, got {len(confirmed)}. "
-                      "Use & between alert_ips and threat_intel")
+                      f"expected a set of {len(expected)} IPs that are in BOTH alert_ips "
+                      "and threat_intel. Use & between alert_ips and threat_intel")
     except Exception as error:
         return report(5, "confirmed", False, f"checker error: {error}")
 

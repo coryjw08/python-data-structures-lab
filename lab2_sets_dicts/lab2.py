@@ -140,7 +140,9 @@ def check_set_task(number, name, value, expected, how_hint):
         # Right items, wrong data structure. The lecture cares about this.
         return report(number, name, False,
                       f"the right IPs, but it is a {type(value).__name__}, not a set. {how_hint}")
-    return report(number, name, False, f"expected {sorted(expected)}, got {value!r}. {how_hint}")
+    # Show the expected set with { } so it does not look like a list.
+    shown = "{" + ", ".join(repr(item) for item in sorted(expected)) + "}"
+    return report(number, name, False, f"expected {shown}, got {value!r}. {how_hint}")
 
 
 def check_task_1_unique_ips():
@@ -224,8 +226,14 @@ def check_task_6_ssh_name():
 
 def check_task_7_add_rdp():
     try:
-        if services.get(3389) == "rdp":
+        if (services.get(3389) == "rdp" and services.get(22) == "ssh"
+                and services.get(80) == "http" and services.get(443) == "https"):
             return report(7, "add rdp to services", True)
+        if services.get(3389) == "rdp":
+            # Usually: services = {3389: "rdp"}, which throws away the old ports.
+            return report(7, "add rdp to services", False,
+                          "3389 is there, but ports 22, 80, or 443 are gone. Add ONE key to the "
+                          "existing dictionary with my_dict[key] = value. Don't make a new one")
         if "3389" in services:
             return report(7, "add rdp to services", False,
                           "you used the text '3389' as the key. The other keys are numbers, so use 3389 with no quotes")

@@ -111,4 +111,9 @@ You are welcome to *read* the checker code. It is real Python and a good example
 
 1. Re-read the `# TODO` comment. It tells you which tool to use and what the answer should be.
 2. Read the hint on the `FAIL` line. It points you toward the fix.
-3. Ask an instructor. That is what we are here for.
+3. Seeing red text that starts with `Traceback` instead of PASS/FAIL? Your code stopped
+   before the checker could run. Read the **last line** of the red text. It names the problem,
+   for example `KeyError: '22'` (that key is not in the dictionary) or
+   `IndexError: list index out of range` (no item at that index). The line number just above it
+   shows where. Fix that line and run the file again.
+4. Ask an instructor. That is what we are here for.

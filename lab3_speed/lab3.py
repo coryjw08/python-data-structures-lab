@@ -101,12 +101,14 @@ def check_task_1_bad_ips_set():
         expected = count_expected_matches()
         if type(bad_ips) is not set:
             return report(1, "bad_ips is a set", False,
-                          f"bad_ips is still a {type(bad_ips).__name__}. "
+                          f"bad_ips is a {type(bad_ips).__name__}, not a set. "
                           "Wrap the right-hand side of that line in set( ... )")
         if matches != expected:
             return report(1, "bad_ips is a set", False,
-                          f"bad_ips is a set, but the match count changed to {matches}. "
-                          "It should stay the same as before. Did you build the set from THREAT_FILE?")
+                          f"bad_ips is a set, but the match count changed to {matches} "
+                          f"(it should stay {expected}). Keep the original "
+                          "open(THREAT_FILE).read().splitlines() exactly as it was, "
+                          "and only wrap it in set( ... )")
         return report(1, "bad_ips is a set", True)
     except Exception as error:
         return report(1, "bad_ips is a set", False, f"checker error: {error}")
